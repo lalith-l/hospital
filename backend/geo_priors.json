@@ -1,0 +1,14 @@
+{
+  "Bangalore": {
+    "Jun": {
+      "label": "Elevated Dengue Risk",
+      "priors": [
+        {"disease": "Dengue", "probability": 0.42},
+        {"disease": "Chikungunya", "probability": 0.18},
+        {"disease": "Malaria", "probability": 0.12}
+      ],
+      "source": "NVBDCP Historical 2019-2024",
+      "last_verified": "2025-01-15"
+    }
+  }
+}
