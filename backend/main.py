@@ -137,7 +137,8 @@ async def websocket_resource_map(websocket: WebSocket, token: str = None):
 app.add_middleware(
     CORSMiddleware,
     # Replace the wildcard with your explicit frontend URL
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:5174", "http://127.0.0.1:5174", "http://localhost:5175", "http://127.0.0.1:5175"], 
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:5174", "http://127.0.0.1:5174", "http://localhost:5175", "http://127.0.0.1:5175", "https://hospital-c2tf-hbco4aurd-lalith-ls-projects.vercel.app"], 
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
