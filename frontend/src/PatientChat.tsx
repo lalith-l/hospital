@@ -259,7 +259,7 @@ function PatientChat() {
     setIsLoading(true);
 
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+      const apiUrl = import.meta.env.VITE_API_URL || 'https://hospital-tp5s.onrender.com';
       
       // Calculate Behavioral Turn Data
       const latency_ms = firstActionTime ? firstActionTime - turnStartTime : 0;
@@ -406,7 +406,7 @@ function PatientChat() {
     if (!triageResult) return;
     
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+      const apiUrl = import.meta.env.VITE_API_URL || 'https://hospital-tp5s.onrender.com';
       const alertRes = await fetch(`${apiUrl}/api/create-alert`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -433,7 +433,7 @@ function PatientChat() {
   // Poll for alert status
   useEffect(() => {
     if (!alertId || alertStatus === 'acknowledged') return;
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+    const apiUrl = import.meta.env.VITE_API_URL || 'https://hospital-tp5s.onrender.com';
     const interval = setInterval(async () => {
       try {
         const res = await fetch(`${apiUrl}/api/alerts/${alertId}/status`);
@@ -459,7 +459,7 @@ function PatientChat() {
 
   const handleDownloadReport = async () => {
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+      const apiUrl = import.meta.env.VITE_API_URL || 'https://hospital-tp5s.onrender.com';
       const res = await fetch(`${apiUrl}/api/generate-report`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

@@ -30,7 +30,7 @@ export default function HeatmapLayer({ width, height }: HeatmapLayerProps) {
       const token = localStorage.getItem('hospital_token');
       if (!token) return;
 
-      const wsUrl = (import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000').replace(/^http/, 'ws');
+      const wsUrl = (import.meta.env.VITE_API_URL || 'https://hospital-tp5s.onrender.com').replace(/^http/, 'ws');
       const ws = new WebSocket(`${wsUrl}/ws/resource-map?token=${token}`);
       wsRef.current = ws;
 
