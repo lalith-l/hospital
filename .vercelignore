@@ -1,6 +1,5 @@
 backend/
-main.py
 requirements.txt
+main.py
 render.yaml
 Procfile
-.env
