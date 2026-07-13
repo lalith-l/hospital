@@ -35,5 +35,4 @@ dist/
 .eslintcache
 
 # Large Data
-backend/ddxplus_data/ddxplus.index
 backend/ddxplus_data/validate.csv

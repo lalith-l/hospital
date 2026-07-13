@@ -27,7 +27,7 @@ def main():
     print(f"Total unique symptoms in vocabulary: {len(all_symptoms)}")
 
     print("Loading validate split...")
-    df = pd.read_csv(os.path.join(DATA_DIR, "validate.csv"))
+    df = pd.read_csv(os.path.join(DATA_DIR, "validate.csv"), nrows=40000)
     print(f"Loaded {len(df)} records.")
 
     print("Parsing evidences...")

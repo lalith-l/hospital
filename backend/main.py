@@ -85,12 +85,6 @@ async def broadcast_resource_bottlenecks():
 
 @app.on_event("startup")
 async def startup_event():
-    import os
-    if not os.path.exists("ddxplus_data/ddxplus.index"):
-        print("FAISS index not found. Building it automatically on startup...")
-        os.system("python download_ddxplus.py")
-        os.system("python build_index.py")
-
     global resource_monitor_task
     resource_monitor_task = asyncio.create_task(broadcast_resource_bottlenecks())
     await seed_db.run_seeding()
