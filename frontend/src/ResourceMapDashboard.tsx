@@ -1,4 +1,4 @@
-import React from 'react';
+// React import removed for React 17+ JSX transform
 import HeatmapLayer from './HeatmapLayer';
 
 export const RESOURCE_COORDINATES: Record<string, { x: number, y: number }> = {

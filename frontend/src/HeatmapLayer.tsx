@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { RESOURCE_COORDINATES } from './ResourceMapDashboard';
 
 interface HeatmapLayerProps {
@@ -14,7 +14,7 @@ interface HeatmapDataPoint {
 export default function HeatmapLayer({ width, height }: HeatmapLayerProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const dataRef = useRef<HeatmapDataPoint[]>([]);
-  const animationRef = useRef<number>();
+  const animationRef = useRef<number>(0);
   const wsRef = useRef<WebSocket | null>(null);
   
   const [connectionState, setConnectionState] = useState<'connecting' | 'connected' | 'reconnecting'>('connecting');
@@ -23,7 +23,7 @@ export default function HeatmapLayer({ width, height }: HeatmapLayerProps) {
   // WebSocket Connection Logic with Exponential Backoff
   useEffect(() => {
     let isMounted = true;
-    let reconnectTimeout: NodeJS.Timeout;
+    let reconnectTimeout: ReturnType<typeof setTimeout>;
 
     const connect = () => {
       if (!isMounted) return;

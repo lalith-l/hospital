@@ -2,7 +2,7 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import { useState, useEffect } from 'react';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
-import HeatmapLayer from './HeatmapLayer';
+import LeafletHeatmapLayer from './LeafletHeatmapLayer';
 import { Layers } from 'lucide-react';
 
 // Fix leaflet default icon issue
@@ -109,7 +109,7 @@ export default function HospitalMap({ userLat, userLon, hospitalLat, hospitalLon
           </Popup>
         </Marker>
         {showHeatmap && heatmapData.length > 0 && (
-          <HeatmapLayer data={heatmapData} />
+          <LeafletHeatmapLayer data={heatmapData as any} />
         )}
       </MapContainer>
       </div>
