@@ -1,0 +1,40 @@
+{
+  "Cardiovascular": [
+    {"resource": "Cath_Lab", "weight": 1.0},
+    {"resource": "Ultrasound_Bay", "weight": 0.5}
+  ],
+  "Respiratory": [
+    {"resource": "Respiratory_Isolation", "weight": 1.0},
+    {"resource": "X_Ray", "weight": 0.8}
+  ],
+  "Trauma": [
+    {"resource": "X_Ray", "weight": 1.0},
+    {"resource": "Ultrasound_Bay", "weight": 0.7}
+  ],
+  "Neurological": [
+    {"resource": "X_Ray", "weight": 0.3},
+    {"resource": "Ultrasound_Bay", "weight": 0.3}
+  ],
+  "Gastrointestinal": [
+    {"resource": "Ultrasound_Bay", "weight": 0.9}
+  ],
+  "Infectious": [
+    {"resource": "Respiratory_Isolation", "weight": 0.8}
+  ],
+  "Myocardial Infarction": [
+    {"resource": "Cath_Lab", "weight": 1.0}
+  ],
+  "Angina": [
+    {"resource": "Cath_Lab", "weight": 0.6}
+  ],
+  "Larygospasm": [
+    {"resource": "Cath_Lab", "weight": 1.0}
+  ],
+  "Croup": [
+    {"resource": "Ultrasound_Bay", "weight": 0.8}
+  ],
+  "Pneumonia": [
+    {"resource": "X_Ray", "weight": 0.9},
+    {"resource": "Respiratory_Isolation", "weight": 0.5}
+  ]
+}

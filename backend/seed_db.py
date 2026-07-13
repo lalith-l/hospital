@@ -253,6 +253,16 @@ def seed_admin_user(db: sqlite3.Connection):
         """, ("u1", first_h_id, "manipal_reception", password_hash, "reception"))
         db.commit()
 
+    existing_doc = db.execute("SELECT id FROM hospital_users WHERE username = ?", ("doctor",)).fetchone()
+    if not existing_doc:
+        logger.info("Seeding default doctor user...")
+        password_hash = bcrypt.hashpw(b"doctor123", bcrypt.gensalt()).decode()
+        db.execute("""
+            INSERT INTO hospital_users (id, hospital_id, username, password_hash, role)
+            VALUES (?, ?, ?, ?, ?)
+        """, ("u2", first_h_id, "doctor", password_hash, "doctor"))
+        db.commit()
+
 def seed_doctors(db: sqlite3.Connection):
     cursor = db.cursor()
     cursor.execute("SELECT COUNT(*) FROM doctors")
@@ -279,7 +289,7 @@ def seed_doctors(db: sqlite3.Connection):
             "rating": 4.9,
             "experience_years": 8,
             "consultation_fee": 700,
-            "practo_url": "https://www.practo.com/bangalore/doctor/vivek-murthy-general-physician",
+            "practo_url": "https://www.practo.com/bangalore/doctor/suresh-g-general-physician",
             "nabh_hospital": 1
         },
         {
@@ -288,11 +298,11 @@ def seed_doctors(db: sqlite3.Connection):
             "qualification": "MBBS, MS - Orthopaedics",
             "specialty": "orthopedist",
             "hospital_id": h_id,
-            "lat": 12.9591, "lng": 77.6474,
-            "rating": 4.7,
+            "lat": 13.0350, "lng": 77.5965,
+            "rating": 4.6,
             "experience_years": 15,
-            "consultation_fee": 1000,
-            "practo_url": "https://www.practo.com/bangalore/doctor/dr-anil-kumar-orthopedist",
+            "consultation_fee": 850,
+            "practo_url": "https://www.practo.com/bangalore/doctors",
             "nabh_hospital": 1
         }
     ]

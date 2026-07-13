@@ -1,4 +1,6 @@
-from fastapi import FastAPI, HTTPException, Response
+from fastapi import FastAPI, HTTPException, Response, WebSocket, WebSocketDisconnect
+import asyncio
+import capacity_model
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
@@ -45,17 +47,101 @@ def get_db():
 
 app = FastAPI(title="Predictive Patient Pathfinder API")
 
+
+# --- Resource Bottleneck WebSocket ---
+active_ws_connections = []
+resource_monitor_task = None
+
+async def broadcast_resource_bottlenecks():
+    while True:
+        try:
+            # Check for stale tokens in active connections
+            now = datetime.datetime.utcnow()
+            valid_connections = []
+            for ws, exp_time in active_ws_connections:
+                if exp_time < now:
+                    await ws.close(code=1008, reason="Token Expired")
+                else:
+                    valid_connections.append((ws, exp_time))
+            
+            active_ws_connections.clear()
+            active_ws_connections.extend(valid_connections)
+            
+            if active_ws_connections:
+                data = capacity_model.calculate_bottlenecks()
+                payload = {
+                    "type": "HEATMAP_UPDATE",
+                    "data": data
+                }
+                for ws, _ in active_ws_connections:
+                    try:
+                        await ws.send_json(payload)
+                    except:
+                        pass
+        except Exception as e:
+            print(f"Error in resource monitor loop: {e}")
+            
+        await asyncio.sleep(5)
+
 @app.on_event("startup")
 async def startup_event():
+    global resource_monitor_task
+    resource_monitor_task = asyncio.create_task(broadcast_resource_bottlenecks())
     await seed_db.run_seeding()
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    global resource_monitor_task
+    if resource_monitor_task:
+        resource_monitor_task.cancel()
+
+@app.websocket("/ws/resource-map")
+async def websocket_resource_map(websocket: WebSocket, token: str = None):
+    await websocket.accept()
+    if not token:
+        await websocket.close(code=1008, reason="Missing Token")
+        return
+        
+    try:
+        payload = jwt.decode(token, os.environ.get("JWT_SECRET", "super-secret"), algorithms=["HS256"])
+        if payload.get("role") != "doctor":
+            await websocket.close(code=1008, reason="Unauthorized Role")
+            return
+            
+        exp_timestamp = payload.get("exp")
+        exp_time = datetime.datetime.utcfromtimestamp(exp_timestamp) if exp_timestamp else datetime.datetime.utcnow() + datetime.timedelta(hours=24)
+        
+        active_ws_connections.append((websocket, exp_time))
+        
+        # Send initial data immediately
+        initial_data = capacity_model.calculate_bottlenecks()
+        try:
+            await websocket.send_json({"type": "HEATMAP_UPDATE", "data": initial_data})
+        except Exception:
+            return
+        
+        
+        try:
+            while True:
+                await websocket.receive_text() # Just keep connection open
+        except WebSocketDisconnect:
+            active_ws_connections.remove((websocket, exp_time))
+            
+    except jwt.ExpiredSignatureError:
+        await websocket.close(code=1008, reason="Token Expired")
+    except jwt.InvalidTokenError:
+        await websocket.close(code=1008, reason="Invalid Token")
+
 
 # Configure CORS for frontend access
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allows all origins
+    # Replace the wildcard with your explicit frontend URL
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:5174", "http://127.0.0.1:5174", "http://localhost:5175", "http://127.0.0.1:5175"], 
     allow_credentials=True,
-    allow_methods=["*"],  # Allows all methods
-    allow_headers=["*"],  # Allows all headers
+    allow_methods=["*"],
+    allow_headers=["*"],
+
 )
 
 def verify_token(authorization: str = Header(...)):
@@ -90,10 +176,10 @@ async def login(body: LoginRequest):
         "user_id": user["id"],
         "hospital_id": user["hospital_id"],
         "role": user["role"],
-        "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=8)
-    }, JWT_SECRET, algorithm="HS256")
+        "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=24)
+    }, os.environ.get("JWT_SECRET", "super-secret"), algorithm="HS256")
     
-    return {"token": token, "hospital_id": user["hospital_id"]}
+    return {"token": token, "hospital_id": user["hospital_id"], "role": user["role"]}
 
 class Message(BaseModel):
     role: str
@@ -130,8 +216,8 @@ import json
 
 @app.post("/api/intake/chat")
 def intake_chat(request: IntakeChatRequest):
-    if not os.environ.get("OPENROUTER_API_KEY"):
-         raise HTTPException(status_code=500, detail="OPENROUTER_API_KEY is not configured on the server.")
+    if not os.environ.get("GROQ_API_KEY"):
+         raise HTTPException(status_code=500, detail="GROQ_API_KEY is not configured on the server.")
 
     llm_messages = [{"role": m.role, "content": m.content} for m in request.messages]
     
@@ -160,10 +246,19 @@ def intake_chat(request: IntakeChatRequest):
     extracted_data = IntakeAgent.extract_symptoms(llm_messages)
     current_symptoms = extracted_data.get("symptoms", [])
     
+    ddx_probs = []
     if current_symptoms:
         # 2. Get current differentials to compute entropy
         ddx_result = DiagnosisAgent.compute_differential(current_symptoms)
         ddx_probs = ddx_result.get("probabilities", [])
+        
+        # 3. Update active session store for spatial heatmap
+        if request.session_id:
+            capacity_model.active_session_store.update_session(request.session_id, ddx_probs)
+    else:
+        # Clear session if no symptoms are detected yet
+        if request.session_id:
+            capacity_model.active_session_store.remove_session(request.session_id)
         
         # Calculate entropy
         for p in ddx_probs:
@@ -207,9 +302,13 @@ def intake_chat(request: IntakeChatRequest):
         # Call the INTAKE AGENT (LLM)
         result = IntakeAgent.chat(llm_messages, dynamic_context)
         if result.get("status") == "error":
-            raise HTTPException(status_code=500, detail=result.get("message"))
+            return result
             
-        final_question = result.get("message", "")
+        final_question_raw = result.get("message", "")
+        if isinstance(final_question_raw, dict):
+            final_question = final_question_raw.get("text", str(final_question_raw))
+        else:
+            final_question = str(final_question_raw)
         
         # IMPROVEMENT 2: Clinical Question Validator
         if current_symptoms and result.get("status") == "question":
@@ -369,7 +468,7 @@ def compute_triage(request: ComputeTriageRequest):
         behavioral_analysis = behavioral_engine.compute_coherence(request.behavioral_history, verbal_severity)
 
     result = {
-        "status": "complete",
+        "status": action,
         "action": action,
         "condition": condition,
         "urgency": urgency,

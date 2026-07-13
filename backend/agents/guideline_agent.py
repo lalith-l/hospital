@@ -3,11 +3,11 @@ import json
 from openai import OpenAI
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(override=True)
 
 client = OpenAI(
-  base_url = "https://openrouter.ai/api/v1",
-  api_key = os.environ.get("OPENROUTER_API_KEY", "your-api-key")
+  base_url = "https://api.groq.com/openai/v1",
+  api_key = os.environ.get("GROQ_API_KEY", "your-api-key")
 )
 
 SYSTEM_PROMPT = """
@@ -41,7 +41,7 @@ class GuidelineAgent:
         
         try:
             response = client.chat.completions.create(
-                model="openai/gpt-4o-mini",
+                model="llama-3.3-70b-versatile",
                 messages=[
                     {"role": "system", "content": SYSTEM_PROMPT},
                     {"role": "user", "content": prompt}

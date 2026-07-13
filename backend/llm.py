@@ -3,11 +3,11 @@ import json
 from openai import OpenAI
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(override=True)
 
 client = OpenAI(
-  base_url = "https://openrouter.ai/api/v1",
-  api_key = os.environ.get("OPENROUTER_API_KEY", "your-api-key")
+  base_url = "https://api.groq.com/openai/v1",
+  api_key = os.environ.get("GROQ_API_KEY", "your-api-key")
 )
 
 # Load DDXPlus Vocabulary once at startup
@@ -53,7 +53,7 @@ You MUST respond ONLY with a valid JSON object matching this schema. Do not incl
 def analyze_image(base64_image: str):
     try:
         response = client.chat.completions.create(
-            model="openai/gpt-4o-mini",
+            model="llama-3.2-11b-vision-preview",
             messages=[
                 {
                     "role": "user",
@@ -94,7 +94,7 @@ Conversation:
 {convo_text}"""
     try:
         response = client.chat.completions.create(
-            model="openai/gpt-4o-mini",
+            model="llama-3.3-70b-versatile",
             messages=[{"role": "user", "content": prompt}],
             response_format={"type": "json_object"},
             max_tokens=150,
@@ -116,7 +116,7 @@ def generate_triage_response(messages: list, dynamic_context: str = "Location un
         full_messages = [{"role": "system", "content": formatted_prompt}] + messages
         
         response = client.chat.completions.create(
-            model="openai/gpt-4o-mini",
+            model="llama-3.3-70b-versatile",
             messages=full_messages,
             temperature=0.2,
             max_tokens=1024,

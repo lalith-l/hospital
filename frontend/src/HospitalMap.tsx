@@ -47,7 +47,7 @@ export default function HospitalMap({ userLat, userLon, hospitalLat, hospitalLon
   useEffect(() => {
     const fetchHeatmapData = async () => {
       try {
-        const apiUrl = import.meta.env.VITE_API_URL || 'https://blissful-beauty-production-d031.up.railway.app';
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
         const res = await fetch(`${apiUrl}/api/ambient-pressure/map`);
         const data = await res.json();
         setHeatmapData(data);

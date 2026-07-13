@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Activity, Clock, MapPin, CheckCircle, AlertTriangle, TrendingUp, Users } from 'lucide-react';
 import { AuroraBackground } from './components/ui/aurora-background';
 
@@ -24,10 +25,12 @@ function HospitalDashboard() {
   const [hospitalId, setHospitalId] = useState('h1');
   const [loadStatus, setLoadStatus] = useState<any>(null);
 
+  const navigate = useNavigate();
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || 'https://blissful-beauty-production-d031.up.railway.app';
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
       const res = await fetch(`${apiUrl}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -35,6 +38,15 @@ function HospitalDashboard() {
       });
       if (res.ok) {
         const data = await res.json();
+        
+        // Save for websocket/routing
+        localStorage.setItem('hospital_token', data.token);
+        
+        if (data.role === 'doctor') {
+            navigate('/hospital/map');
+            return;
+        }
+        
         setAuthHeader(`Bearer ${data.token}`);
         if (data.hospital_id) {
             setHospitalId(data.hospital_id);
@@ -52,7 +64,7 @@ function HospitalDashboard() {
   const fetchAlerts = async () => {
     if (!authHeader) return;
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || 'https://blissful-beauty-production-d031.up.railway.app';
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
       const response = await fetch(`${apiUrl}/api/alerts`, {
         headers: {
           'Authorization': authHeader
@@ -71,7 +83,7 @@ function HospitalDashboard() {
     if (!authHeader) return;
     try {
       // Use the dynamically set hospitalId from login
-      const apiUrl = import.meta.env.VITE_API_URL || 'https://blissful-beauty-production-d031.up.railway.app';
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
       const response = await fetch(`${apiUrl}/api/hospital/load?hospital_id=${hospitalId}`, {
         headers: {
           'Authorization': authHeader
@@ -100,7 +112,7 @@ function HospitalDashboard() {
 
   const handleAcknowledge = async (alertId: string) => {
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || 'https://blissful-beauty-production-d031.up.railway.app';
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
       await fetch(`${apiUrl}/api/alerts/${alertId}/acknowledge`, {
         method: 'POST',
         headers: {
@@ -137,7 +149,7 @@ function HospitalDashboard() {
                 />
               </div>
               <div>
-                <p className="text-xs text-slate-400 mb-1 text-left">Password: aegis2024</p>
+                <p className="text-xs text-slate-400 mb-1 text-left">Password: aegis2024 (Reception) / doctor123 (Doctor)</p>
                 <input
                   type="password"
                   placeholder="Password (aegis2024)"

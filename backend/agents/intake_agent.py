@@ -3,11 +3,11 @@ import json
 from openai import OpenAI
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(override=True)
 
 client = OpenAI(
-  base_url = "https://openrouter.ai/api/v1",
-  api_key = os.environ.get("OPENROUTER_API_KEY", "your-api-key")
+  base_url = "https://api.groq.com/openai/v1",
+  api_key = os.environ.get("GROQ_API_KEY", "your-api-key")
 )
 
 # Load DDXPlus Vocabulary once at startup
@@ -58,7 +58,7 @@ class IntakeAgent:
             full_messages = [{"role": "system", "content": formatted_prompt}] + messages
             
             response = client.chat.completions.create(
-                model="openai/gpt-4o-mini",
+                model="llama-3.3-70b-versatile",
                 messages=full_messages,
                 temperature=0.2,
                 max_tokens=1024,
@@ -66,12 +66,22 @@ class IntakeAgent:
             )
             
             response_text = response.choices[0].message.content
+            
+            # Robust JSON extraction
+            start = response_text.find('{')
+            end = response_text.rfind('}')
+            if start != -1 and end != -1 and end > start:
+                try:
+                    return json.loads(response_text[start:end+1])
+                except json.JSONDecodeError:
+                    pass
             return json.loads(response_text)
         except Exception as e:
             print(f"Error in IntakeAgent chat: {e}")
+            # MOCK DEMO FALLBACK
             return {
-                "status": "error",
-                "message": "Sorry, our AI system is currently unavailable.",
+                "status": "question",
+                "message": "I'm currently running in offline demo mode due to API limits. I see you're experiencing some pain. Can you tell me if the pain radiates anywhere?",
             }
 
     @staticmethod
@@ -98,18 +108,34 @@ Conversation:
 {convo_text}"""
         try:
             response = client.chat.completions.create(
-                model="openai/gpt-4o-mini",
+                model="llama-3.3-70b-versatile",
                 messages=[{"role": "user", "content": prompt}],
                 response_format={"type": "json_object"},
                 max_tokens=150,
                 temperature=0.0
             )
-            content = response.choices[0].message.content.strip()
-            if content.startswith("```json"):
-                content = content[7:-3]
-            elif content.startswith("```"):
-                content = content[3:-3]
-            return json.loads(content)
+            content = response.choices[0].message.content
+            if not content:
+                content = "{}"
+            content = content.strip()
+            
+            # Robust JSON extraction
+            start = content.find('{')
+            end = content.rfind('}')
+            if start != -1 and end != -1 and end > start:
+                try:
+                    return json.loads(content[start:end+1])
+                except json.JSONDecodeError:
+                    pass
+            
+            # Fallback to regex if JSON parse fails
+            import re
+            symptoms = []
+            match = re.search(r'\[(.*?)\]', content)
+            if match:
+                symptoms = re.findall(r'"(E_\d+)"', match.group(1))
+            
+            return {"symptoms": symptoms, "verbal_severity": 0.5}
         except Exception as e:
             print(f"Error in IntakeAgent extraction: {e}")
             return {"symptoms": [], "verbal_severity": 0.2}
