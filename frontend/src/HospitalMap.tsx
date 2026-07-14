@@ -47,7 +47,7 @@ export default function HospitalMap({ userLat, userLon, hospitalLat, hospitalLon
   useEffect(() => {
     const fetchHeatmapData = async () => {
       try {
-        const apiUrl = import.meta.env.VITE_API_URL || 'https://hospital-tp5s.onrender.com';
+        const apiUrl = 'https://hospital-tp5s.onrender.com';
         const res = await fetch(`${apiUrl}/api/ambient-pressure/map`);
         const data = await res.json();
         setHeatmapData(data);

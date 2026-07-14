@@ -30,7 +30,7 @@ function HospitalDashboard() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || 'https://hospital-tp5s.onrender.com';
+      const apiUrl = 'https://hospital-tp5s.onrender.com';
       const res = await fetch(`${apiUrl}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -64,7 +64,7 @@ function HospitalDashboard() {
   const fetchAlerts = async () => {
     if (!authHeader) return;
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || 'https://hospital-tp5s.onrender.com';
+      const apiUrl = 'https://hospital-tp5s.onrender.com';
       const response = await fetch(`${apiUrl}/api/alerts`, {
         headers: {
           'Authorization': authHeader
@@ -83,7 +83,7 @@ function HospitalDashboard() {
     if (!authHeader) return;
     try {
       // Use the dynamically set hospitalId from login
-      const apiUrl = import.meta.env.VITE_API_URL || 'https://hospital-tp5s.onrender.com';
+      const apiUrl = 'https://hospital-tp5s.onrender.com';
       const response = await fetch(`${apiUrl}/api/hospital/load?hospital_id=${hospitalId}`, {
         headers: {
           'Authorization': authHeader
@@ -112,7 +112,7 @@ function HospitalDashboard() {
 
   const handleAcknowledge = async (alertId: string) => {
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || 'https://hospital-tp5s.onrender.com';
+      const apiUrl = 'https://hospital-tp5s.onrender.com';
       await fetch(`${apiUrl}/api/alerts/${alertId}/acknowledge`, {
         method: 'POST',
         headers: {
